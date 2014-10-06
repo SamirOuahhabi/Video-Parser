@@ -1,6 +1,5 @@
 package com.ouahhabi.videoparser;
 
-import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,6 +10,7 @@ import java.io.PrintWriter;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -26,7 +26,8 @@ import net.miginfocom.swing.MigLayout;
 public class GUI extends JFrame
 {
 	private static final long serialVersionUID = 1L;
-	private VideoParser _videoParser;
+	private VideoParser _80sVideoParser;
+	private VideoParser _90sVideoParser;
 	private JPanel _contentPane;
 	private JLabel _searchLabel;
 	private JLabel _playlistLabel;
@@ -35,6 +36,8 @@ public class GUI extends JFrame
 	private JTextField _playlistField;
 	private JList<Video> _videosList;
 	private JScrollPane _pane;
+	private JCheckBox _eighties;
+	private JCheckBox _nineties;
 	private DefaultListModel<Video> _listModel;
 	private JButton _generatePlaylist;
 	private VPEventHandler _eventHandler;
@@ -74,16 +77,29 @@ public class GUI extends JFrame
 	private void loadEventHandlers()
 	{
 		_eventHandler = new VPEventHandler();
+		
 		_searchField.addKeyListener(_eventHandler);
+		_searchField.setActionCommand("search");
+		
 		_generatePlaylist.addActionListener(_eventHandler);
+		_generatePlaylist.setActionCommand("generate_playlist");
+		
+		_eighties.addActionListener(_eventHandler);
+		_eighties.setActionCommand("eighties");
+		
+		_nineties.addActionListener(_eventHandler);
+		_nineties.setActionCommand("nineties");
 	}
 
 	private void loadListModel()
 	{
-		_videoParser = new VideoParser("http://www.90smusicvidz.com/");
-		_listModel = new DefaultListModel<Video>();
-		for (Video v : _videoParser.getVideos())
-			_listModel.addElement(v);
+		_listModel.clear();
+		if(_eighties.isSelected())
+			for (Video v : _80sVideoParser.getVideos())
+				_listModel.addElement(v);
+		if(_nineties.isSelected())
+			for (Video v : _90sVideoParser.getVideos())
+				_listModel.addElement(v);
 		_videosList.setModel(_listModel);
 	}
 
@@ -94,9 +110,9 @@ public class GUI extends JFrame
 		_contentPane = new JPanel();
 		_contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(_contentPane);
-		_contentPane.setLayout(new MigLayout("", "[]15[grow]15[]",
+		_contentPane.setLayout(new MigLayout("", "[]15[grow]15[]15[]",
 				"[]15[]15[grow]15[]"));
-		setTitle("Visual video parser");
+		setTitle("Video Parser");
 
 		try
 		{
@@ -122,6 +138,9 @@ public class GUI extends JFrame
 
 	private void loadComponents()
 	{
+		_80sVideoParser = new VideoParser("http://www.80smusicvids.com/");
+		_90sVideoParser = new VideoParser("http://www.90smusicvidz.com/");
+		_listModel = new DefaultListModel<Video>();
 		_searchLabel = new JLabel("Search: ");
 		_searchField = new JTextField(22);
 		_playlistLabel = new JLabel("Playlist name: ");
@@ -129,24 +148,31 @@ public class GUI extends JFrame
 		_messageLabel = new JLabel(
 				"Select your desired songs from the list below. (CTRL+Click for mult selection)");
 		_videosList = new JList<Video>();
-		_generatePlaylist = new JButton("Generate VLC Playlist");
+		_generatePlaylist = new JButton("Generate XSPF Playlist");
+		_eighties = new JCheckBox("80s");
+		_nineties = new JCheckBox("90s");
+		
+		_eighties.setSelected(true);
+		_nineties.setSelected(true);
 
 		loadListModel();
 
 		_pane = new JScrollPane(_videosList);
 		_contentPane.add(_searchLabel, "cell 0 0");
-		_contentPane.add(_searchField, "cell 1 0 2 1, grow");
+		_contentPane.add(_searchField, "cell 1 0 2 1, growx");
 		_contentPane.add(_messageLabel, "cell 0 1 3 1 growx");
-		_contentPane.add(_pane, "cell 0 2 3 4, grow");
+		_contentPane.add(_pane, "cell 0 2 4 4, grow");
 		_contentPane.add(_playlistLabel, "cell 0 6");
 		_contentPane.add(_playlistField, "cell 1 6, growx");
 		_contentPane.add(_generatePlaylist, "cell 2 6");
+		_contentPane.add(_eighties, "cell 3 0");
+		_contentPane.add(_nineties, "cell 3 1");
 	}
 
 	public void search()
 	{
 		// TODO
-		throw new UnsupportedOperationException("TO DO");
+		
 	}
 
 	private void createPlaylist()
@@ -208,10 +234,24 @@ public class GUI extends JFrame
 		}
 
 		@Override
-		public void actionPerformed(ActionEvent arg0)
+		public void actionPerformed(ActionEvent ev)
 		{
-			System.out.println("Creating VLC playlist...");
-			createPlaylist();
+			String action = ev.getActionCommand();
+			
+			switch (action.toLowerCase())
+			{
+			case "generate_playlist":
+				createPlaylist();
+				break;
+			case "eighties":
+				loadListModel();
+				break;
+			case "nineties":
+				loadListModel();
+				break;
+			default:
+				break;
+			}
 		}
 
 	}
