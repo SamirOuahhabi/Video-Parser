@@ -2,6 +2,12 @@ package com.ouahhabi.videoparser;
 
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -31,6 +37,7 @@ public class GUI extends JFrame
 	private JScrollPane _pane;
 	private DefaultListModel<Video> _listModel;
 	private JButton _generatePlaylist;
+	private VPEventHandler _eventHandler;
 
 	/**
 	 * Launch the application.
@@ -61,11 +68,19 @@ public class GUI extends JFrame
 	{
 		setupWindow();
 		loadComponents();
+		loadEventHandlers();
+	}
+
+	private void loadEventHandlers()
+	{
+		_eventHandler = new VPEventHandler();
+		_searchField.addKeyListener(_eventHandler);
+		_generatePlaylist.addActionListener(_eventHandler);
 	}
 
 	private void loadListModel()
 	{
-		_videoParser = new VideoParser("http://www.90smusicvidz.com");
+		_videoParser = new VideoParser("http://www.90smusicvidz.com/");
 		_listModel = new DefaultListModel<Video>();
 		for (Video v : _videoParser.getVideos())
 			_listModel.addElement(v);
@@ -79,8 +94,8 @@ public class GUI extends JFrame
 		_contentPane = new JPanel();
 		_contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(_contentPane);
-		_contentPane
-				.setLayout(new MigLayout("", "[]15[grow]15[]", "[]15[]15[grow]15[]"));
+		_contentPane.setLayout(new MigLayout("", "[]15[grow]15[]",
+				"[]15[]15[grow]15[]"));
 		setTitle("Visual video parser");
 
 		try
@@ -126,5 +141,78 @@ public class GUI extends JFrame
 		_contentPane.add(_playlistLabel, "cell 0 6");
 		_contentPane.add(_playlistField, "cell 1 6, growx");
 		_contentPane.add(_generatePlaylist, "cell 2 6");
+	}
+
+	public void search()
+	{
+		// TODO
+		throw new UnsupportedOperationException("TO DO");
+	}
+
+	private void createPlaylist()
+	{
+		PrintWriter output = null;
+		Video temp;
+		int[] selectedIndices;
+		String filename, title;
+		
+		title = _playlistField.getText().replace('\\', '_').replace('/', '_');
+		if(title.isEmpty())
+			title = "Untitled";
+		
+		filename = title + ".xspf";
+		
+		try
+		{
+			output = new PrintWriter(filename);
+		}
+		catch (FileNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+		
+		output.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"+
+					"<playlist version=\"1\" xmlns=\"http://xspf.org/ns/0/\" "+
+					"xmlns:vlc=\"http://www.videolan.org/vlc/playlist/ns/0/\">"+
+					"<title>"+title+"</title><trackList>");
+		
+		selectedIndices = _videosList.getSelectedIndices();
+		
+		for(int i : selectedIndices)
+		{
+			temp = _listModel.elementAt(i);
+			temp.extractFLVAddress();
+			output.println(temp.toXML());
+		}
+		
+		output.println("</trackList></playlist>");
+		output.close();
+	}
+
+	private class VPEventHandler implements KeyListener, ActionListener
+	{
+		@Override
+		public void keyPressed(KeyEvent e)
+		{
+		}
+
+		@Override
+		public void keyReleased(KeyEvent e)
+		{
+			search();
+		}
+
+		@Override
+		public void keyTyped(KeyEvent e)
+		{
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent arg0)
+		{
+			System.out.println("Creating VLC playlist...");
+			createPlaylist();
+		}
+
 	}
 }
