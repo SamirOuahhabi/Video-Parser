@@ -10,13 +10,6 @@ public class VideoParser
 	protected URL _url;
 	protected ArrayList<Video> _videos;
 
-	public static void main(String[] args)
-	{
-		VideoParser vp = new VideoParser("http://www.90smusicvidz.com/");
-		for(Video vid : vp.getVideos())
-			System.out.println(vid);
-	}
-
 	public VideoParser(String menuPage)
 	{
 		_menuPage = menuPage;
